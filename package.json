@@ -13,7 +13,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "build:dev": "REACT_APP_HOMEPAGE=https://devv-site.netlify.app react-scripts build",
+    "build:prod": "REACT_APP_HOMEPAGE=https://prod-site.netlify.app react-scripts build"
   },
   "eslintConfig": {
     "extends": [
@@ -38,6 +40,5 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
     "gh-pages": "^6.3.0"
-  },
-  "homepage": "https://github-action-test.netlify.app"
+  }
 }
