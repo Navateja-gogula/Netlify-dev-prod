@@ -74,7 +74,7 @@ jobs:
   create-pull-request:
     name: Create Pull Request for Dev to Prod
     runs-on: ubuntu-latest
-    needs: build-and-deploy
+    needs: build-and-deploy  # This ensures the PR is created after the build-and-deploy job finishes successfully
     if: github.ref == 'refs/heads/dev'
     steps:
       - name: Checkout Code
@@ -92,6 +92,7 @@ jobs:
   deploy-to-netlify-prod:
     name: Deploy to Netlify (Prod)
     runs-on: ubuntu-latest
+    needs: create-pull-request  # This ensures the deploy happens after the PR creation
     if: github.ref == 'refs/heads/prod' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
     steps:
       # Step 1: Checkout Code
