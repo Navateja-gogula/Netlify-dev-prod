@@ -67,7 +67,7 @@ jobs:
       # Merge dev into prod and resolve conflicts (Favor prod changes)
       - name: Merge dev into prod and resolve conflicts
         run: |
-          git merge dev --strategy-option ours --allow-unrelated-histories --no-edit
+          git merge dev --strategy-option theirs --allow-unrelated-histories --no-edit
           git push origin prod || echo "Merge conflicts resolved, no changes to push"
 
   build-and-deploy-prod:
