@@ -44,7 +44,7 @@ jobs:
         if: github.ref == 'refs/heads/dev'  # Deploy on test branch
         uses: nwtgck/actions-netlify@v3
         with:
-          publish-dir: /build
+          publish-dir: ./build
           production-deploy: false  # Ensure this deploy is not to production
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
