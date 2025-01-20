@@ -1,4 +1,5 @@
 name: Multi-Environment Deployment with Notifications
+
 on:
   push:
     branches:
@@ -7,9 +8,11 @@ on:
     branches:
       - prod
   workflow_dispatch:
+
 permissions:
   contents: write
   id-token: write
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -17,6 +20,7 @@ jobs:
       # Step 1: Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
+
       # Step 2: Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -24,19 +28,24 @@ jobs:
           node-version: 20
           cache: npm
           cache-dependency-path: package-lock.json
+
       # Step 3: Install dependencies
       - name: Install dependencies
         run: npm ci
-      # Step 4: Run tests (only for test branch)
+
+      # Step 4: Run tests (only for dev branch)
       - name: Run tests
         if: github.ref_name == 'dev'
         run: npm test
+
       # Step 5: Build the app
       - name: Build the app
         run: npm run build --verbose
+
       # Step 6: List dist directory for debugging
       - name: List dist directory
         run: ls -alh /build || echo "Dist directory not found"
+
       # Step 7: Deploy to Netlify (dev branch)
       - name: Deploy to Netlify (dev)
         if: github.ref == 'refs/heads/dev'
@@ -48,6 +57,7 @@ jobs:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_DEV_SITE_ID }}
           HOMEPAGE_URL: ${{ secrets.HOMEPAGE_URL }}
+
       # Step 8: Send email notification after dev deploy
       - name: Send email for dev deploy
         uses: dawidd6/action-send-mail@v3
@@ -82,20 +92,24 @@ jobs:
   deploy-to-netlify-prod:
     name: Deploy to Netlify (Prod)
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/prod'
+    if: github.ref == 'refs/heads/prod' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
     steps:
       # Step 1: Checkout Code
       - name: Checkout Code
         uses: actions/checkout@v3
+
       # Step 2: Install dependencies
       - name: Install dependencies
         run: npm ci
+
       # Step 3: Build the app
       - name: Build the app
         run: npm run build --verbose
+
       # Step 4: List dist directory for debugging
       - name: List dist directory
         run: ls -alh /build || echo "Dist directory not found"
+
       # Step 5: Deploy to Netlify (prod branch)
       - name: Deploy to Netlify (Prod)
         uses: nwtgck/actions-netlify@v3
@@ -106,6 +120,7 @@ jobs:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_PROD_SITE_ID }}
           HOMEPAGE_URL: ${{ secrets.PROD_HOMEPAGE_URL }}
+
       # Step 6: Send email notification after prod deploy
       - name: Send email for prod deploy
         uses: dawidd6/action-send-mail@v3
