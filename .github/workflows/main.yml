@@ -80,9 +80,15 @@ jobs:
       # Step 1: Checkout Code
       - name: Checkout Code
         uses: actions/checkout@v3
+
+      # Step 5: Build the app
+      - name: Build the app
+        run: npm run build --verbose
+
       # Step 6: List dist directory for debugging
       - name: List dist directory
         run: ls -alh /build || echo "Dist directory not found"
+        
       # Step 2: Deploy to Netlify (Prod)
       - name: Deploy to Netlify (Prod)
         uses: nwtgck/actions-netlify@v3
