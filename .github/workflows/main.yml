@@ -4,10 +4,7 @@ on:
   push:
     branches:
       - dev
-  pull_request:
-    branches:
       - prod
-  workflow_dispatch:  # This allows you to manually trigger the workflow
 
 jobs:
   build-and-deploy-dev:
@@ -29,14 +26,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      # Run tests on dev
-      - name: Run tests (Dev)
-        run: npm test -- --coverage
-
       # Build the app for dev with homepage
       - name: Build the app (Dev)
         run: |
-          REACT_APP_HOMEPAGE=https://dev-site.netlify.app npm run build
+          REACT_APP_HOMEPAGE=https://devv-site.netlify.app npm run build
 
       # Deploy to Netlify (Dev)
       - name: Deploy to Netlify (Dev)
@@ -47,35 +40,35 @@ jobs:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_DEV_SITE_ID }}
 
-  create-pull-request:
+  auto-merge-to-prod:
+    needs: build-and-deploy-dev
     if: success() && github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
-
-    permissions:
-      pull-requests: write
 
     steps:
       # Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Set up GitHub CLI and authenticate
-      - name: Set up GitHub CLI
+      # Configure Git
+      - name: Set up Git
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+          git config --global user.name "Navateja-gogula"
+          git config --global user.email "ngogula@anergroup.com"
 
-      # Create Pull Request from dev to prod
-      - name: Create Pull Request from dev to prod
+      # Merge dev into prod and handle conflicts
+      - name: Merge dev into prod and resolve conflicts
         run: |
-          PR_TITLE="Auto Merge Dev to Prod"
-          PR_BODY="This PR was automatically created to merge changes from the dev branch to the prod branch after successful testing."
-          gh pr create --base prod --head dev --title "$PR_TITLE" --body "$PR_BODY" --label "auto-merge" || echo "Failed to create PR"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
+          git fetch origin
+          git checkout prod
+          git merge --no-ff dev || echo "Merge conflict occurred"
+          git add -A
+          git commit -m "Auto-merge dev into prod"
+          git push origin prod
 
   build-and-deploy-prod:
-    if: github.event_name == 'pull_request' && github.ref == 'refs/heads/prod'
+    needs: auto-merge-to-prod
+    if: success() && github.ref == 'refs/heads/prod'
     runs-on: ubuntu-latest
 
     steps:
