@@ -1,0 +1,99 @@
+name: CI/CD for React App
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - prod
+  workflow_dispatch:  # This allows you to manually trigger the workflow
+
+jobs:
+  build-and-deploy-dev:
+    if: github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      # Install dependencies
+      - name: Install dependencies
+        run: npm install
+
+      # Run tests on dev
+      - name: Run tests (Dev)
+        run: npm test -- --coverage
+
+      # Build the app for dev with homepage
+      - name: Build the app (Dev)
+        run: |
+          REACT_APP_HOMEPAGE=https://dev-site.netlify.app npm run build
+
+      # Deploy to Netlify (Dev)
+      - name: Deploy to Netlify (Dev)
+        uses: nwtgck/actions-netlify@v3
+        with:
+          publish-dir: ./build
+          production-deploy: false
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_DEV_SITE_ID }}
+
+  create-pull-request:
+    if: success() && github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Create Pull Request from dev to prod
+      - name: Create Pull Request from dev to prod
+        run: |
+          PR_TITLE="Auto Merge Dev to Prod"
+          PR_BODY="This PR was automatically created to merge changes from the dev branch to the prod branch after successful testing."
+          gh pr create --base prod --head dev --title "$PR_TITLE" --body "$PR_BODY" --label "auto-merge"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-and-deploy-prod:
+    if: github.event_name == 'pull_request' && github.ref == 'refs/heads/prod'
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      # Install dependencies
+      - name: Install dependencies
+        run: npm install
+
+      # Build the app for prod with homepage
+      - name: Build the app (Prod)
+        run: |
+          REACT_APP_HOMEPAGE=https://prod-site.netlify.app npm run build
+
+      # Deploy to Netlify (Prod)
+      - name: Deploy to Netlify (Prod)
+        uses: nwtgck/actions-netlify@v3
+        with:
+          publish-dir: ./build
+          production-deploy: true
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_PROD_SITE_ID }}
