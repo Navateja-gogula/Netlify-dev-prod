@@ -8,11 +8,6 @@ on:
     branches:
       - prod
   workflow_dispatch:
-  workflow_run:
-    workflows:
-      - "Multi-Environment Deployment with Notifications" # Name of the workflow that triggers it
-    types:
-      - completed
 
 permissions:
   contents: write
@@ -24,11 +19,9 @@ jobs:
     if: github.ref_name == 'dev'  # Only runs on dev branch
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Step 2: Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -36,19 +29,15 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
 
-      # Step 3: Install dependencies
       - name: Install dependencies
         run: npm ci
 
-      # Step 4: Run tests
       - name: Run tests
         run: npm test
 
-      # Step 5: Build the app
       - name: Build the app
         run: npm run build --verbose
 
-      # Step 6: Deploy to Netlify (dev branch)
       - name: Deploy to Netlify (dev)
         uses: nwtgck/actions-netlify@v3
         with:
@@ -57,9 +46,7 @@ jobs:
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_DEV_SITE_ID }}
-          HOMEPAGE_URL: ${{ secrets.HOMEPAGE_URL }}
 
-      # Step 7: Send email for dev deploy
       - name: Send email for dev deploy
         uses: dawidd6/action-send-mail@v3
         with:
@@ -68,28 +55,28 @@ jobs:
           username: ${{ secrets.SMTP_USERNAME }}
           password: ${{ secrets.SMTP_PASSWORD }}
           subject: "Code Deployed to Dev Environment"
-          body: "The latest code has been successfully deployed to the dev environment. Visit the site at ${{ secrets.HOMEPAGE_URL }}."
+          body: |
+            The latest code has been successfully deployed to the dev environment.
+            Visit the site at ${{ secrets.HOMEPAGE_URL }}.
+            Commit: ${{ github.sha }}
+            Workflow run: ${{ github.run_id }}
           to: "gogulateja92@gmail.com"
           from: "gogulanavateja1910@gmail.com"
 
   deploy-to-netlify-prod:
-    if: github.event.workflow_run.event == 'pull_request' && github.event.pull_request.merged == true  # Ensures it runs only after merging PR into prod
+    if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
     name: Deploy to Netlify (Prod)
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Checkout Code
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Step 2: Install dependencies
       - name: Install dependencies
         run: npm ci
 
-      # Step 3: Build the app
       - name: Build the app
         run: npm run build --verbose
 
-      # Step 4: Deploy to Netlify (prod branch)
       - name: Deploy to Netlify (Prod)
         uses: nwtgck/actions-netlify@v3
         with:
@@ -98,9 +85,7 @@ jobs:
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_PROD_SITE_ID }}
-          HOMEPAGE_URL: ${{ secrets.PROD_HOMEPAGE_URL }}
 
-      # Step 5: Send email for prod deploy
       - name: Send email for prod deploy
         uses: dawidd6/action-send-mail@v3
         with:
@@ -109,6 +94,10 @@ jobs:
           username: ${{ secrets.SMTP_USERNAME }}
           password: ${{ secrets.SMTP_PASSWORD }}
           subject: "Code Deployed to Prod Environment"
-          body: "The latest code has been successfully deployed to the prod environment. Visit the site at ${{ secrets.PROD_HOMEPAGE_URL }}."
+          body: |
+            The latest code has been successfully deployed to the prod environment.
+            Visit the site at ${{ secrets.PROD_HOMEPAGE_URL }}.
+            Commit: ${{ github.sha }}
+            Workflow run: ${{ github.run_id }}
           to: "gogulateja92@gmail.com"
           from: "gogulanavateja1910@gmail.com"
