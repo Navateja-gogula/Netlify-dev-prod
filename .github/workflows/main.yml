@@ -35,7 +35,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Step 4: Run tests (only for dev branch)
+      # Step 4: Run tests
       - name: Run tests
         run: npm test
 
@@ -87,12 +87,12 @@ jobs:
           base: prod
           title: "Pull Request: Merge Dev into Prod"
           body: "This pull request is for merging the changes from the dev branch to the prod branch."
-          auto-merge: false  # Manual merge required
+          auto-merge: false
 
   deploy-to-netlify-prod:
     name: Deploy to Netlify (Prod)
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/prod'
+    if: github.ref == 'refs/heads/prod' && github.event_name == 'push'
     steps:
       # Step 1: Checkout Code
       - name: Checkout Code
